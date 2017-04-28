@@ -28,6 +28,7 @@ namespace System.Collections.ObjectModel
             if (collection == null) throw new ArgumentNullException(nameof(collection));
             if (collection.Count == 0) return;
 
+            ObservableCollectionInvoker<T>.CheckReentrancy(self);
             var items = (List<T>)ObservableCollectionInvoker<T>.GetItems(self);
             items.AddRange(collection);
             var e = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, (IList)collection);
@@ -38,6 +39,10 @@ namespace System.Collections.ObjectModel
 
         static class ObservableCollectionInvoker<T>
         {
+            public static void CheckReentrancy(ObservableCollection<T> source) {
+                checkReentrancy(source);
+            }
+
             public static IList<T> GetItems(ObservableCollection<T> source) {
                 return getItems(source);
             }
@@ -51,9 +56,19 @@ namespace System.Collections.ObjectModel
             }
 
             static ObservableCollectionInvoker() {
+                checkReentrancy = CreateCheckReentrancy();
                 getItems = CreateGetItems();
                 onPropertyChanged = CreateOnPropertyChanged();
                 onCollectionChanged = CreateOnCollectionChanged();
+            }
+
+            static Action<ObservableCollection<T>> CreateCheckReentrancy() {
+                const BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance;
+                var type = typeof(ObservableCollection<T>);
+                var method = type.GetMethod("CheckReentrancy", bindingFlags);
+                var instance = Expression.Parameter(type);
+                var call = Expression.Call(instance, method);
+                return Expression.Lambda<Action<ObservableCollection<T>>>(call, instance).Compile();
             }
 
             static Func<ObservableCollection<T>, IList<T>> CreateGetItems() {
@@ -86,6 +101,7 @@ namespace System.Collections.ObjectModel
                 return Expression.Lambda<Action<ObservableCollection<T>, NotifyCollectionChangedEventArgs>>(call, instance, parameter).Compile();
             }
 
+            static Action<ObservableCollection<T>> checkReentrancy;
             static Func<ObservableCollection<T>, IList<T>> getItems;
             static Action<ObservableCollection<T>, string> onPropertyChanged;
             static Action<ObservableCollection<T>, NotifyCollectionChangedEventArgs> onCollectionChanged;
