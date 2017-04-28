@@ -108,5 +108,26 @@ namespace System.Collections.ObjectModel
             var list = (List<int>)null;
             collection.AddRange(list);
         }
+
+        [TestMethod]
+        public void AddRangeTestWithEmptyCollection() {
+            var collection = new ObservableCollection<string>();
+            var list = new List<string>();
+            var propertyChanged = 0;
+            ((INotifyPropertyChanged)collection).PropertyChanged += (s, e) => {
+                propertyChanged++;
+                Console.WriteLine($"PropertyChanged: {e.PropertyName}.");
+            };
+            var collectionChanged = 0;
+            ((INotifyCollectionChanged)collection).CollectionChanged += (s, e) => {
+                collectionChanged++;
+                Console.WriteLine($"CollectionChanged: {e.Action}, {e.NewItems.Count}.");
+            };
+            collection.AddRange(list);
+            Assert.AreEqual(propertyChanged, 0);
+            Assert.AreEqual(collectionChanged, 0);
+            CollectionAssert.AreEqual(collection, list);
+        }
+
     }
 }
