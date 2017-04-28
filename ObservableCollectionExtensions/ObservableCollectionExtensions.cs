@@ -26,6 +26,7 @@ namespace System.Collections.ObjectModel
         public static void AddRange<T>(this ObservableCollection<T> self, IReadOnlyList<T> collection) {
             if (self == null) throw new ArgumentNullException(nameof(self));
             if (collection == null) throw new ArgumentNullException(nameof(collection));
+            if (collection.Count == 0) return;
 
             var items = (List<T>)ObservableCollectionInvoker<T>.GetItems(self);
             items.AddRange(collection);
