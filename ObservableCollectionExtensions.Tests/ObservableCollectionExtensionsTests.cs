@@ -104,7 +104,7 @@ namespace System.Collections.ObjectModel
         [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void AddRangeTestWithNullCollection() {
-            var collection = (ObservableCollection<int>)null;
+            var collection = new ObservableCollection<int>();
             var list = (List<int>)null;
             collection.AddRange(list);
         }
